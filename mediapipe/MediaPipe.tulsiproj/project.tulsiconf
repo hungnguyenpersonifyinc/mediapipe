@@ -3,6 +3,9 @@
     "optionSet" : {
       "CLANG_CXX_LANGUAGE_STANDARD" : {
         "p" : "c++14"
+      },
+      "ProjectGenerationPlatformConfiguration" : {
+        "p" : "macos_arm64"
       }
     }
   },

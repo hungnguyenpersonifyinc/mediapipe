@@ -181,7 +181,7 @@ cc_library(
         "//mediapipe:android": ["resource_util_android.cc"],
         "//mediapipe/framework:android_no_jni": ["resource_util_loonix.cc"],
         "//mediapipe:ios": ["resource_util_apple.cc"],
-        "//mediapipe:macos": ["resource_util_default.cc"],
+        "//mediapipe:macos": ["resource_util_apple.cc"],
     }),
     hdrs = [
         "resource_util.h",
@@ -192,7 +192,9 @@ cc_library(
         "//mediapipe:ios": [
             "-ObjC++",
         ],
-        "//mediapipe:macos": [],
+        "//mediapipe:macos": [
+            "-ObjC++",
+        ],
     }),
     visibility = ["//visibility:public"],
     deps = [

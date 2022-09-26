@@ -51,11 +51,29 @@ cc_library(
     ],
 )
 
+cc_library(
+    name = "holistic_tracking_cpu_deps",
+    deps = [
+        ":holistic_tracking_to_render_data",
+        "//mediapipe/calculators/core:flow_limiter_calculator",
+        "//mediapipe/calculators/image:image_properties_calculator",
+        "//mediapipe/calculators/util:annotation_overlay_calculator",
+        "//mediapipe/modules/holistic_landmark:holistic_landmark_cpu",
+    ],
+)
+
 mediapipe_binary_graph(
     name = "holistic_tracking_gpu",
     graph = "holistic_tracking_gpu.pbtxt",
     output_name = "holistic_tracking_gpu.binarypb",
     deps = [":holistic_tracking_gpu_deps"],
+)
+
+mediapipe_binary_graph(
+    name = "holistic_tracking_cpu",
+    graph = "holistic_tracking_cpu.pbtxt",
+    output_name = "holistic_tracking_cpu.binarypb",
+    deps = [":holistic_tracking_cpu_deps"],
 )
 
 cc_library(
