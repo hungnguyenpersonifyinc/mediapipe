@@ -2,7 +2,7 @@ load("@build_bazel_rules_apple//apple:macos.bzl", "macos_bundle")
 
 macos_bundle(
     name = "PSYBodyTracking",
-    bundle_id = "dev.noppe.HandTracker",
+    bundle_id = "com.personifyinc.PSYBodyTracking",
     infoplists = ["Info.plist"],
     minimum_os_version = "10.15",
     deps = [
@@ -92,22 +92,38 @@ objc_library(
 )
 
 objc_library(
+    name = "holistic_tracking_cpu",
+    data = [
+        "//mediapipe/graphs/holistic_tracking:holistic_tracking_cpu.binarypb",
+        "//mediapipe/modules/face_detection:face_detection_short_range.tflite",
+        "//mediapipe/modules/face_landmark:face_landmark.tflite",
+        "//mediapipe/modules/hand_landmark:hand_landmark_full.tflite",
+        "//mediapipe/modules/hand_landmark:hand_landmark_lite.tflite",
+        "//mediapipe/modules/hand_landmark:handedness.txt",
+        "//mediapipe/modules/holistic_landmark:hand_recrop.tflite",
+        "//mediapipe/modules/pose_detection:pose_detection.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+    ],
+    deps = [
+        "//mediapipe/graphs/holistic_tracking:holistic_tracking_cpu_graph_deps",
+    ],
+)
+
+objc_library(
     name = "CommonAppLibrary",
     srcs = [
-        "FullBodyPoseTracker.mm",
+        "PSYBodyTracking.mm",
         "MPPInputSource.mm",
         "MPPGraph.mm",
         "NSError+util_status.mm",
         "MPPTimestampConverter.mm",
-        "MyLib.cc",
     ],
     hdrs = [
-        "FullBodyPoseTracker.h",
+        "PSYBodyTracking.h",
         "MPPInputSource.h",
         "MPPGraph.h",
         "NSError+util_status.h",
         "MPPTimestampConverter.h",
-        "MyLib.h",
     ],
     
     sdk_frameworks = [
@@ -132,6 +148,7 @@ objc_library(
         ":CFHolder",
         ":util",
         ":hand_tracking_cpu",
+        ":holistic_tracking_cpu",
         ":mediapipe_framework",
         "//mediapipe/framework:calculator_framework",
     #    "//mediapipe/calculators/image:recolor_calculator",

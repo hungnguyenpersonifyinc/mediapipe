@@ -87,6 +87,7 @@
 
 - (void)addFrameOutputStream:(const std::string&)outputStreamName
             outputPacketType:(MPPPacketType)packetType {
+  NSlog(@"addFrameOutputStream %s", outputStreamName.c_str());
   std::string callbackInputName;
   mediapipe::tool::AddCallbackCalculator(outputStreamName, &_config, &callbackInputName,
                                        /*use_std_function=*/true);

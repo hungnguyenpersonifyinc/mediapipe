@@ -29,10 +29,6 @@
 // #include "mediapipe/gpu/gpu_shared_data_internal.h"
 #include "util.h"
 
-#ifndef DEBUG
-#define DEBUG 1
-#endif
-
 #import "NSError+util_status.h"
 #import "GTMDefines.h"
 
@@ -109,9 +105,8 @@
 /// receives the graph's output.
 void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
                        MPPPacketType packetType, const mediapipe::Packet& packet) {
-  MPPGraph* wrapper = (__bridge MPPGraph*)wrapperVoid;
   @autoreleasepool {
-    NSLog(@"Have response from mediapipe, packetType: %d", packetType);
+    MPPGraph* wrapper = (__bridge MPPGraph*)wrapperVoid;
     wrapper->_framesInFlight--;
     if (packetType == MPPPacketTypeRaw) {
       [wrapper.delegate mediapipeGraph:wrapper

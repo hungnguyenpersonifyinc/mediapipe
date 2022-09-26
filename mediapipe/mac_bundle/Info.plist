@@ -3,4 +3,4 @@ CFBundleName = "${PRODUCT_NAME}";
 CFBundlePackageType = "BNDL";
 CFBundleShortVersionString = "1.0";
 CFBundleVersion = "1.0";
-NSPrincipalClass = "UpperBodyPoseTracker";
+NSPrincipalClass = "PSYBodyTracking";
