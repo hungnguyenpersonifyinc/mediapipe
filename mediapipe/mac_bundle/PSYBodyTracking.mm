@@ -25,7 +25,6 @@ static const char* kNumHandsInputSidePacket = "num_hands";
 @interface PSYBodyTracking() <MPPGraphDelegate>
 @property(nonatomic) MPPGraph* mediapipeGraph;
 @property(nonatomic) MPPTimestampConverter *timestampConverter;
-@property(assign, nonatomic) BOOL renderTrackingImage;
 @end
 
 @interface MPLandmark()
@@ -56,6 +55,7 @@ static const char* kNumHandsInputSidePacket = "num_hands";
 @end
 
 @implementation PSYBodyTracking
+@synthesize trackingOptions = _trackingOptions;
 
 #pragma mark - Cleanup methods
 
@@ -73,7 +73,7 @@ static const char* kNumHandsInputSidePacket = "num_hands";
 
 #pragma mark - MediaPipe graph methods
 
-+ (MPPGraph*)loadGraphFromResource:(NSString*)resource wantsImage:(BOOL)wantsImage {
++ (MPPGraph*)loadGraphFromResource:(NSString*)resource options:(PSYBodyTrackingOptions)trackingOptions {
     // Load the graph config resource.
     NSError* configLoadError = nil;
     NSBundle* bundle = [NSBundle bundleForClass:[self class]];
@@ -93,15 +93,31 @@ static const char* kNumHandsInputSidePacket = "num_hands";
     
     // Create MediaPipe graph with mediapipe::CalculatorGraphConfig proto object.
     MPPGraph* newGraph = [[MPPGraph alloc] initWithGraphConfig:config];
-    if (wantsImage) {
+    
+    if (OptionsHasValue(trackingOptions, PSYBodyTrackingPoseLandmarks)) {
+        [newGraph addFrameOutputStream:kPoseLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
+    }
+
+    if (OptionsHasValue(trackingOptions, PSYBodyTrackingPoseDetect)) {
+        [newGraph addFrameOutputStream:kPoseDetectionOutputStream outputPacketType:MPPPacketTypeRaw];
+    }
+
+    if (OptionsHasValue(trackingOptions, PSYBodyTrackingLeftHandLandmarks)) {
+        [newGraph addFrameOutputStream:kLeftHandLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
+    }
+
+    if (OptionsHasValue(trackingOptions, PSYBodyTrackingRightHandLandmarks)) {
+        [newGraph addFrameOutputStream:kRightHandLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
+    }
+
+    if (OptionsHasValue(trackingOptions, PSYBodyTrackingFaceLandmarks)) {
+        [newGraph addFrameOutputStream:kFaceLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
+    }
+
+    if (OptionsHasValue(trackingOptions, PSYBodyTrackingImageOutput)) {
         [newGraph addFrameOutputStream:kOutputStream outputPacketType:MPPPacketTypeImageFrame];
     }
-    
-    [newGraph addFrameOutputStream:kPoseLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
-    [newGraph addFrameOutputStream:kPoseDetectionOutputStream outputPacketType:MPPPacketTypeRaw];
-    [newGraph addFrameOutputStream:kLeftHandLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
-    [newGraph addFrameOutputStream:kRightHandLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
-    [newGraph addFrameOutputStream:kFaceLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
+
     return newGraph;
 }
 
@@ -114,7 +130,7 @@ static const char* kNumHandsInputSidePacket = "num_hands";
 }
 
 - (void)loadGraph {
-    self.mediapipeGraph = [[self class] loadGraphFromResource:kGraphName wantsImage:_renderTrackingImage];
+    self.mediapipeGraph = [[self class] loadGraphFromResource:kGraphName options:_trackingOptions];
     self.mediapipeGraph.delegate = self;
     // Set maxFramesInFlight to a small value to avoid memory contention for real-time processing.
     self.mediapipeGraph.maxFramesInFlight = 0;
@@ -125,10 +141,7 @@ static const char* kNumHandsInputSidePacket = "num_hands";
     }
 }
 
--(void)startGraphWantOutputImage:(BOOL)wantOutputImage 
-                        callback:(void (^)(BOOL success))callback {
-    self.renderTrackingImage = wantOutputImage;
-
+-(void)startGraphWithCallback:(void (^)(BOOL success))callback {
     PSYBodyTracking *__weak weakSelf = self;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
         [weakSelf stop];
@@ -142,6 +155,8 @@ static const char* kNumHandsInputSidePacket = "num_hands";
         } else {
             callback(true);
         }
+
+        [weakSelf.timestampConverter reset];
     });
 }
 
@@ -149,40 +164,15 @@ static const char* kNumHandsInputSidePacket = "num_hands";
     [self.mediapipeGraph closeAllInputStreamsWithError:nil];
 }
 
-// - (void)setTrackingOptions:(PSYBodyTrackingOptions)trackingOptions {
-//     _trackingOptions = trackingOptions;
-    // [self removeAllOutput];
-    // NSLog(@"_trackingOptions: %lu", _trackingOptions);
-    // if (OptionsHasValue(_trackingOptions, PSYBodyTrackingImageOutput)) {
-    //     [self.mediapipeGraph addFrameOutputStream:kOutputStream outputPacketType:MPPPacketTypeImageFrame];
-    // }
+ - (void)setTrackingOptions:(PSYBodyTrackingOptions)trackingOptions {
+     _trackingOptions = trackingOptions;
+     [self removeAllOutput];
+     [self.timestampConverter reset];
+ }
 
-    // if (OptionsHasValue(_trackingOptions, PSYBodyTrackingPoseLandmarks)) {
-    //     [self.mediapipeGraph addFrameOutputStream:kPoseLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
-    // }
-
-    // if (OptionsHasValue(_trackingOptions, PSYBodyTrackingPoseDetect)) {
-    //     [self.mediapipeGraph addFrameOutputStream:kPoseDetectionOutputStream outputPacketType:MPPPacketTypeRaw];
-    // }
-
-    // if (OptionsHasValue(_trackingOptions, PSYBodyTrackingLeftHandLandmarks)) {
-    //     [self.mediapipeGraph addFrameOutputStream:kLeftHandLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
-    // }
-
-    // if (OptionsHasValue(_trackingOptions, PSYBodyTrackingRightHandLandmarks)) {
-    //     [self.mediapipeGraph addFrameOutputStream:kRightHandLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
-    // }
-
-    // if (OptionsHasValue(_trackingOptions, PSYBodyTrackingFaceLandmarks)) {
-    //     [self.mediapipeGraph addFrameOutputStream:kFaceLandmarksOutputStream outputPacketType:MPPPacketTypeRaw];
-    // }
-
-    // [self.timestampConverter reset];
-// }
-
-// - (PSYBodyTrackingOptions)trackingOptions {
-//     return _trackingOptions;
-// }
+ - (PSYBodyTrackingOptions)trackingOptions {
+     return _trackingOptions;
+ }
 
 #pragma mark - MPPGraphDelegate methods
 

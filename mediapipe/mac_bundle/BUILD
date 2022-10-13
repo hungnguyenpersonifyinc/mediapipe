@@ -1,7 +1,18 @@
 load("@build_bazel_rules_apple//apple:macos.bzl", "macos_bundle")
+load("@build_bazel_rules_apple//apple:macos.bzl", "macos_dylib")
 
 macos_bundle(
     name = "PSYBodyTracking",
+    bundle_id = "com.personifyinc.PSYBodyTracking",
+    infoplists = ["Info.plist"],
+    minimum_os_version = "10.15",
+    deps = [
+        ":CommonAppLibrary",
+    ],
+)
+
+macos_dylib(
+    name = "PSYBodyTracking_dylib",
     bundle_id = "com.personifyinc.PSYBodyTracking",
     infoplists = ["Info.plist"],
     minimum_os_version = "10.15",
@@ -29,14 +40,12 @@ cc_library(
         "-parse_headers",
         "layering_check",
     ],
-    
     linkopts = [
         "-framework Accelerate",
         "-framework CoreFoundation",
         "-framework CoreGraphics",
         "-framework CoreVideo",
     ],
-    
     visibility = ["//mediapipe/framework:mediapipe_internal"],
     deps = [
         ":CFHolder",
@@ -63,13 +72,11 @@ cc_library(
         "//mediapipe/framework/formats:landmark_cc_proto",
         "//mediapipe/framework/formats:detection_cc_proto",
         "//mediapipe/framework/formats:rect_cc_proto",
-
-    ]  + select({
+    ] + select({
         "//conditions:default": [
             "//mediapipe/graphs/hand_tracking:mobile_calculators",
-           "//mediapipe/graphs/object_detection:mobile_calculators",
+            "//mediapipe/graphs/object_detection:mobile_calculators",
         ],
-    
         "//mediapipe/gpu:disable_gpu": [
             "//mediapipe/graphs/hand_tracking:desktop_tflite_calculators",
             "//mediapipe/graphs/object_detection:desktop_tflite_calculators",
@@ -81,10 +88,10 @@ cc_library(
 objc_library(
     name = "hand_tracking_cpu",
     data = [
-        "//mediapipe/modules/hand_landmark:hand_landmark_full.tflite",
-        "//mediapipe/modules/palm_detection:palm_detection_full.tflite",
         "//mediapipe/graphs/hand_tracking:hand_tracking_desktop_live.binarypb",
+        "//mediapipe/modules/hand_landmark:hand_landmark_full.tflite",
         "//mediapipe/modules/hand_landmark:handedness.txt",
+        "//mediapipe/modules/palm_detection:palm_detection_full.tflite",
     ],
     deps = [
         "//mediapipe/graphs/hand_tracking:desktop_tflite_calculators",
@@ -112,38 +119,34 @@ objc_library(
 objc_library(
     name = "CommonAppLibrary",
     srcs = [
-        "PSYBodyTracking.mm",
-        "MPPInputSource.mm",
         "MPPGraph.mm",
-        "NSError+util_status.mm",
+        "MPPInputSource.mm",
         "MPPTimestampConverter.mm",
+        "NSError+util_status.mm",
+        "PSYBodyTracking.mm",
     ],
     hdrs = [
-        "PSYBodyTracking.h",
-        "MPPInputSource.h",
         "MPPGraph.h",
-        "NSError+util_status.h",
+        "MPPInputSource.h",
         "MPPTimestampConverter.h",
+        "NSError+util_status.h",
+        "PSYBodyTracking.h",
     ],
-    
+    copts = ["-std=c++17"],
+    data = [
+        "//mediapipe/graphs/hand_tracking:desktop_tflite_calculators",
+        "//mediapipe/graphs/holistic_tracking:holistic_tracking_cpu.binarypb",
+        "//mediapipe/graphs/pose_tracking:pose_tracking_cpu.binarypb",
+        "//mediapipe/modules/holistic_landmark:hand_recrop.tflite",
+        "//mediapipe/modules/pose_detection:pose_detection.tflite",
+        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
+    ],
     sdk_frameworks = [
         "AVFoundation",
         "CoreGraphics",
         "CoreMedia",
         "AppKit",
     ],
-    
-    copts = ["-std=c++17"],
-    
-    data = [ 
-        "//mediapipe/graphs/holistic_tracking:holistic_tracking_cpu.binarypb",
-        "//mediapipe/graphs/pose_tracking:pose_tracking_cpu.binarypb",
-        "//mediapipe/modules/pose_detection:pose_detection.tflite",
-        "//mediapipe/modules/pose_landmark:pose_landmark_full.tflite",
-        "//mediapipe/graphs/hand_tracking:desktop_tflite_calculators",
-        "//mediapipe/modules/holistic_landmark:hand_recrop.tflite",
-    ],
-    
     deps = [
         ":CFHolder",
         ":util",
@@ -151,7 +154,7 @@ objc_library(
         ":holistic_tracking_cpu",
         ":mediapipe_framework",
         "//mediapipe/framework:calculator_framework",
-    #    "//mediapipe/calculators/image:recolor_calculator",
+        #    "//mediapipe/calculators/image:recolor_calculator",
         "//mediapipe/framework:mediapipe_profiling",
         "//mediapipe/framework/formats:image",
         "//mediapipe/framework/port:map_util",
@@ -172,7 +175,6 @@ objc_library(
     ] + select({
         "//mediapipe:macos": [],
         "//conditions:default": [
-            
         ],
     }),
 )

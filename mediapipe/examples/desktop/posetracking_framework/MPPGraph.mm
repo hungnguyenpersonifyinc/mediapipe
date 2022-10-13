@@ -87,7 +87,6 @@
 
 - (void)addFrameOutputStream:(const std::string&)outputStreamName
             outputPacketType:(MPPPacketType)packetType {
-  NSlog(@"addFrameOutputStream %s", outputStreamName.c_str());
   std::string callbackInputName;
   mediapipe::tool::AddCallbackCalculator(outputStreamName, &_config, &callbackInputName,
                                        /*use_std_function=*/true);
@@ -112,8 +111,7 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
                        MPPPacketType packetType, const mediapipe::Packet& packet) {
   MPPGraph* wrapper = (__bridge MPPGraph*)wrapperVoid;
   @autoreleasepool {
-    NSLog(@"Have response from mediapipe, streamName: %@, packetType: %d", [NSString stringWithCString:streamName.c_str() 
-                                   encoding:[NSString defaultCStringEncoding]], packetType);
+
     wrapper->_framesInFlight--;
     if (packetType == MPPPacketTypeRaw) {
       [wrapper.delegate mediapipeGraph:wrapper

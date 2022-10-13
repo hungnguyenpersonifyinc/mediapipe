@@ -1,3 +1,18 @@
+//
+//  PSYBodyTracking.h
+//  PSYBodyTracking
+//
+//  Created by Hung Nguyen Thanh on 13/10/2022.
+//
+
+#import <Foundation/Foundation.h>
+
+//! Project version number for PSYBodyTracking.
+FOUNDATION_EXPORT double PSYBodyTrackingVersionNumber;
+
+//! Project version string for PSYBodyTracking.
+FOUNDATION_EXPORT const unsigned char PSYBodyTrackingVersionString[];
+
 #import <Foundation/Foundation.h>
 #import <CoreVideo/CoreVideo.h>
 #import <CoreMedia/CoreMedia.h>
@@ -16,22 +31,22 @@
 -(void)psyBodyTracking:(PSYBodyTracking*)tracking didOutputFaceLandmarks:(NSArray<MPLandmark*> *)landmarks;
 @end
 
-// typedef NS_OPTIONS(NSUInteger, PSYBodyTrackingOptions) {
-//         PSYBodyTrackingNone			        =  0,
-//         PSYBodyTrackingImageOutput  			=  1,
-//         PSYBodyTrackingPoseLandmarks			=  2,
-//         PSYBodyTrackingPoseDetect			=  4,
-//         PSYBodyTrackingLeftHandLandmarks		=  8,
-//         PSYBodyTrackingRightHandLandmarks		=  16,
-//         PSYBodyTrackingFaceLandmarks			=  32,
-// };
+ typedef NS_OPTIONS(NSUInteger, PSYBodyTrackingOptions) {
+         PSYBodyTrackingNone			        =  0,
+         PSYBodyTrackingImageOutput  			=  1,
+         PSYBodyTrackingPoseLandmarks			=  2,
+         PSYBodyTrackingPoseDetect			    =  4,
+         PSYBodyTrackingLeftHandLandmarks		=  8,
+         PSYBodyTrackingRightHandLandmarks		=  16,
+         PSYBodyTrackingFaceLandmarks			=  32,
+ };
 
 @interface PSYBodyTracking : NSObject
 @property(weak, nonatomic) id<PSYBodyTrackingDelegate> delegate;
-// @property(readwrite, nonatomic) PSYBodyTrackingOptions trackingOptions;
+@property(readwrite, nonatomic) PSYBodyTrackingOptions trackingOptions;
 
 -(instancetype)init;
--(void)startGraphWantOutputImage:(BOOL)wantOutputImage callback:(void (^)(BOOL success))callback;
+-(void)startGraphWithCallback:(void (^)(BOOL success))callback;
 -(BOOL)sendPixelBuffer:(CVPixelBufferRef)pixelBuffer timestamp:(CMTime)timestamp;
 
 @end
