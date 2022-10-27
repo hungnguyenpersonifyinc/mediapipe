@@ -32,6 +32,10 @@
 #import "NSError+util_status.h"
 #import "GTMDefines.h"
 
+@interface MPPGraph()
+@property(nonatomic) CVPixelBufferRef pixelBuffer;
+@end
+
 @implementation MPPGraph {
   // Graph is wrapped in a unique_ptr because it was generating 39+KB of unnecessary ObjC runtime
   // information. See https://medium.com/@dmaclach/objective-c-encoding-and-you-866624cc02de
@@ -118,16 +122,29 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
 
       if (format == mediapipe::ImageFormat::SRGBA ||
           format == mediapipe::ImageFormat::GRAY8) {
-        CVPixelBufferRef pixelBuffer;
-        // If kCVPixelFormatType_32RGBA does not work, it returns kCVReturnInvalidPixelFormat.
-        CVReturn error = CVPixelBufferCreate(
+        CVReturn error;
+        if (!wrapper.pixelBuffer || 
+          CVPixelBufferGetWidth(wrapper.pixelBuffer) != frame.Width() || 
+          CVPixelBufferGetHeight(wrapper.pixelBuffer) != frame.Height()) {
+
+            if (!wrapper.pixelBuffer) {
+              CVPixelBufferRelease(wrapper.pixelBuffer);
+            }
+            CVPixelBufferRef pixelBuffer;
+            error = CVPixelBufferCreate(
             NULL, frame.Width(), frame.Height(), kCVPixelFormatType_32BGRA,
             GetCVPixelBufferAttributesForGlCompatibility(), &pixelBuffer);
-        _GTMDevAssert(error == kCVReturnSuccess, @"CVPixelBufferCreate failed: %d", error);
-        error = CVPixelBufferLockBaseAddress(pixelBuffer, 0);
+            _GTMDevAssert(error == kCVReturnSuccess, @"CVPixelBufferCreate failed: %d", error);
+
+            wrapper.pixelBuffer = pixelBuffer;
+        }
+
+        // If kCVPixelFormatType_32RGBA does not work, it returns kCVReturnInvalidPixelFormat.
+        
+        error = CVPixelBufferLockBaseAddress(wrapper.pixelBuffer, 0);
         _GTMDevAssert(error == kCVReturnSuccess, @"CVPixelBufferLockBaseAddress failed: %d", error);
 
-        vImage_Buffer vDestination = vImageForCVPixelBuffer(pixelBuffer);
+        vImage_Buffer vDestination = vImageForCVPixelBuffer(wrapper.pixelBuffer);
         // Note: we have to throw away const here, but we should not overwrite
         // the packet data.
         vImage_Buffer vSource = vImageForImageFrame(frame);
@@ -143,23 +160,23 @@ void CallFrameDelegate(void* wrapperVoid, const std::string& streamName,
           _GTMDevAssert(vError == kvImageNoError, @"vImageGrayToBGRA failed: %zd", vError);
         }
 
-        error = CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
+        error = CVPixelBufferUnlockBaseAddress(wrapper.pixelBuffer, 0);
         _GTMDevAssert(error == kCVReturnSuccess,
                       @"CVPixelBufferUnlockBaseAddress failed: %d", error);
 
         if ([wrapper.delegate respondsToSelector:@selector
                               (mediapipeGraph:didOutputPixelBuffer:fromStream:timestamp:)]) {
           [wrapper.delegate mediapipeGraph:wrapper
-                    didOutputPixelBuffer:pixelBuffer
+                    didOutputPixelBuffer:wrapper.pixelBuffer
                               fromStream:streamName
                                timestamp:packet.Timestamp()];
         } else if ([wrapper.delegate respondsToSelector:@selector
                                      (mediapipeGraph:didOutputPixelBuffer:fromStream:)]) {
           [wrapper.delegate mediapipeGraph:wrapper
-                    didOutputPixelBuffer:pixelBuffer
+                    didOutputPixelBuffer:wrapper.pixelBuffer
                               fromStream:streamName];
         }
-        CVPixelBufferRelease(pixelBuffer);
+        
       } else {
         _GTMDevLog(@"unsupported ImageFormat: %d", format);
       }

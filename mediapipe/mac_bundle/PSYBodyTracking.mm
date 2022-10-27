@@ -144,19 +144,21 @@ static const char* kNumHandsInputSidePacket = "num_hands";
 -(void)startGraphWithCallback:(void (^)(BOOL success))callback {
     PSYBodyTracking *__weak weakSelf = self;
     dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0), ^{
-        [weakSelf stop];
-        [weakSelf loadGraph];
+        @autoreleasepool {
+            [weakSelf stop];
+            [weakSelf loadGraph];
 
-        // Start running self.mediapipeGraph.
-        NSError* error;
-        if (![weakSelf.mediapipeGraph startWithError:&error]) {
-            NSLog(@"Failed to start graph: %@", error);
-            callback(false);
-        } else {
-            callback(true);
+            // Start running self.mediapipeGraph.
+            NSError* error;
+            if (![weakSelf.mediapipeGraph startWithError:&error]) {
+                NSLog(@"Failed to start graph: %@", error);
+                callback(false);
+            } else {
+                callback(true);
+            }
+
+            [weakSelf.timestampConverter reset];
         }
-
-        [weakSelf.timestampConverter reset];
     });
 }
 
@@ -189,8 +191,6 @@ static const char* kNumHandsInputSidePacket = "num_hands";
 - (void)mediapipeGraph:(MPPGraph*)graph
        didOutputPacket:(const ::mediapipe::Packet&)packet
             fromStream:(const std::string&)streamName {
-
-    NSLog(@"mediapipeGraph:didOutputPacket:fromStream %s", streamName.c_str());
 
     if (streamName == kPoseLandmarksOutputStream) {
         [self didOutputPoseLandmarksPackage: packet];
